@@ -1,0 +1,3 @@
+collector/data/
+collector/config.json
+__pycache__/

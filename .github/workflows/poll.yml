@@ -1,0 +1,43 @@
+name: Heat pump readings
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: poll
+  cancel-in-progress: false
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load saved history
+        run: |
+          mkdir -p collector/data
+          if git fetch --depth=1 origin data; then git show origin/data:history.db > collector/data/history.db; fi
+      - name: Take readings
+        env:
+          SPRSUN_USERNAME: ${{ secrets.SPRSUN_USERNAME }}
+          SPRSUN_PASSWORD: ${{ secrets.SPRSUN_PASSWORD }}
+        run: python3 collector/gh_poll.py --samples 4 --out site/api/data
+      - name: Save history
+        if: always()
+        run: |
+          test -s collector/data/history.db || exit 0
+          mkdir state && cp collector/data/history.db state/ && cd state
+          git init -q -b data && git add history.db
+          git -c user.name="readings bot" -c user.email="bot@users.noreply.github.com" commit -qm "history"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
