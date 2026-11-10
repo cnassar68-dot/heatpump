@@ -7,8 +7,6 @@ on:
 permissions:
   actions: write
   contents: write
-  pages: write
-  id-token: write
 concurrency:
   group: poll
   cancel-in-progress: false
@@ -16,9 +14,6 @@ jobs:
   poll:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Load saved history
@@ -38,11 +33,13 @@ jobs:
           git init -q -b data && git add history.db
           git -c user.name="readings bot" -c user.email="bot@users.noreply.github.com" commit -qm "history"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - id: deploy
-        uses: actions/deploy-pages@v4
+      - name: Publish the website
+        run: |
+          test -s site/api/data || exit 0
+          cd site && touch .nojekyll
+          git init -q -b gh-pages && git add -A
+          git -c user.name="readings bot" -c user.email="bot@users.noreply.github.com" commit -qm "readings"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" gh-pages
       - name: Start the next run
         if: always()
         env:
