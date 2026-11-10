@@ -194,3 +194,14 @@ thead th { position: sticky; top: 0; background: var(--surface); color: var(--in
   .side, .views, .ghost, .numbers { display: none; }
   .shell { display: block; }
 }
+
+/* Live mode on this phone */
+.live-btn { width: 100%; text-align: left; white-space: normal; margin-bottom: 8px; }
+.live-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+.live-overlay[hidden] { display: none; }
+.live-box { background: var(--surface); color: inherit; border-radius: 12px; padding: 20px; width: 100%; max-width: 380px; display: grid; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.live-box h2 { margin: 0; font-size: 1.1rem; }
+.live-box p { margin: 0; font-size: .9rem; opacity: .85; }
+.live-box input { font: inherit; padding: 10px; border-radius: 8px; border: 1px solid rgba(127,127,127,.4); background: transparent; color: inherit; }
+.live-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.live-msg { min-height: 1.2em; color: #c0392b; }

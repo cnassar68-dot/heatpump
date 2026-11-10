@@ -633,6 +633,7 @@
 
   window.addEventListener("hashchange", function () { window.scrollTo(0, 0); render(); });
   if (window.ResizeObserver) new ResizeObserver(function () { drawChart(); }).observe(page);
+  window.hpRefresh = refresh;
   refresh();
   setInterval(refresh, REFRESH_MS);
 })();
