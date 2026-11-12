@@ -1,11 +1,9 @@
 name: Heat pump readings
 on:
   schedule:
-    # Backup only: each run starts the next one itself (last step).
-    - cron: "7,22,37,52 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 permissions:
-  actions: write
   contents: write
 concurrency:
   group: poll
@@ -24,7 +22,7 @@ jobs:
         env:
           SPRSUN_USERNAME: ${{ secrets.SPRSUN_USERNAME }}
           SPRSUN_PASSWORD: ${{ secrets.SPRSUN_PASSWORD }}
-        run: python3 collector/gh_poll.py --samples 5 --out site/api/data
+        run: python3 collector/gh_poll.py --samples 1 --out site/api/data
       - name: Save history
         if: always()
         run: |
@@ -40,8 +38,3 @@ jobs:
           git init -q -b gh-pages && git add -A
           git -c user.name="readings bot" -c user.email="bot@users.noreply.github.com" commit -qm "readings"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" gh-pages
-      - name: Start the next run
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run poll.yml --ref main -R ${{ github.repository }}
