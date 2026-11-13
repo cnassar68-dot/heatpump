@@ -208,7 +208,14 @@
   }
 
   var session = null;          // {uid, token}
+  var PTS = "hp-live-points"; // live points kept on this phone (last 48 h)
   var livePoints = {};         // device_key -> points read live on this phone, newest last
+  try { livePoints = JSON.parse(localStorage.getItem(PTS)) || {}; } catch (e) { livePoints = {}; }
+  function keepPoints() {
+    var cut = Date.now() - 48 * 3600000;
+    for (var k in livePoints) livePoints[k] = livePoints[k].filter(function (p) { return p.t > cut; });
+    try { localStorage.setItem(PTS, JSON.stringify(livePoints)); } catch (e) {}
+  }
   var status = { text: "", ok: false };
 
   async function liveRead() {
@@ -249,11 +256,12 @@
       var pts = livePoints[key] = (livePoints[key] || []).filter(function (p) { return p.t !== now; });
       pts.push(Object.assign({ t: now }, res.point));
       var lastSaved = unit.series.length ? unit.series[unit.series.length - 1].t : 0;
-      livePoints[key] = pts.filter(function (p) { return p.t > lastSaved; });
-      unit.series = unit.series.concat(livePoints[key]);
+      livePoints[key] = pts;
+      unit.series = unit.series.concat(pts.filter(function (p) { return p.t > lastSaved; }));
       unit.readings = res.shown;
       unit.status = res.alarm ? "alarm" : res.running ? "running" : "standby";
     }
+    keepPoints();
     data.live = true;
     setButton();
     return data;
@@ -307,7 +315,7 @@
     btn = el("button", { type: "button", "class": "ghost live-btn" });
     btn.onclick = function () {
       if (saved()) {
-        if (confirm("Stop live readings on this phone and forget the login?")) { save(null); session = null; livePoints = {}; status = { text: "", ok: false }; setButton(); if (window.hpRefresh) window.hpRefresh(); }
+        if (confirm("Stop live readings on this phone and forget the login?")) { save(null); session = null; livePoints = {}; keepPoints(); status = { text: "", ok: false }; setButton(); if (window.hpRefresh) window.hpRefresh(); }
       } else openBox();
     };
     if (foot) foot.insertBefore(btn, foot.firstChild); else document.body.appendChild(btn);
