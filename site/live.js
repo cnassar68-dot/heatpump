@@ -157,7 +157,7 @@
     });
     var j = await r.json();
     if (j.code === 200 && j.data && j.data.token) return { uid: j.data.uid, token: j.data.token };
-    throw new Error(j.result_code === "sis.api.NotExistUser" ? "User not found" : "Login refused");
+    throw new Error(j.result_code === "sis.api.NotExistUser" ? "User not found - check the email" : "Login refused - check the password (" + (j.result_code || j.code) + ")");
   }
 
   function snapshot(uid, token, waitMs) {
@@ -283,7 +283,7 @@
   }
   function openBox() {
     if (box) { box.hidden = false; return; }
-    var user = el("input", { type: "text", autocomplete: "username", placeholder: "SPRSUN app username" });
+    var user = el("input", { type: "email", autocomplete: "username", autocapitalize: "none", autocorrect: "off", spellcheck: "false", placeholder: "SPRSUN app login (email)" });
     var pass = el("input", { type: "password", autocomplete: "current-password", placeholder: "SPRSUN app password" });
     var msg = el("p", { "class": "live-msg" });
     var go = el("button", { type: "submit", text: "Start live" });
@@ -300,8 +300,10 @@
       msg.textContent = "Signing in…";
       try {
         var pw = md5(pass.value);
-        session = await login(user.value.trim(), pw);
-        save({ user: user.value.trim(), pw: pw });
+        var who = user.value.trim();
+        if (who.indexOf("@") > 0) who = who.toLowerCase();
+        session = await login(who, pw);
+        save({ user: who, pw: pw });
         pass.value = ""; msg.textContent = ""; box.hidden = true;
         status = { text: "Live: reading…", ok: true }; setButton();
         if (window.hpRefresh) window.hpRefresh();
